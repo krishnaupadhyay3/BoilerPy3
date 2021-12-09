@@ -28,7 +28,7 @@ class Extractor:
     
     SCRIPT_REGEX = re.compile(r'<(?:script|SCRIPT)[^>]*>.*?</(?:script|SCRIPT)>', re.DOTALL)
     
-    def __init__(self, filtr: BoilerpipeFilter, raise_on_failure: bool = True) -> None:
+    def __init__(self, filtr: BoilerpipeFilter, raise_on_failure: bool = True, headers: dict = {}) -> None:
         """
         Initialize extractor
 
@@ -38,6 +38,7 @@ class Extractor:
         
         self.filter = filtr
         self.raise_on_failure = raise_on_failure
+        self.headers = headers
     
     def get_content(self, text: str) -> str:
         return self.get_doc(text).content
@@ -77,7 +78,8 @@ class Extractor:
             return text_file.read()
     
     def read_from_url(self, url: str) -> str:
-        with urllib.request.urlopen(url) as url_obj:
+        request = urllib.request.Request(url, headers=self.headers)
+        with urllib.request.urlopen(request) as url_obj:
             text = url_obj.read()
             encoding = self.get_url_encoding(url_obj)
         
@@ -152,14 +154,14 @@ class ArticleExtractor(Extractor):
         filters.ExpandTitleToContentFilter()
     ])
     
-    def __init__(self, raise_on_failure: bool = True) -> None:
+    def __init__(self, raise_on_failure: bool = True, headers: dict = {}) -> None:
         """
         Initialize extractor
 
         :param raise_on_failure: whether or not to raise an exception if a text extraction failure is encountered.
         """
         
-        super().__init__(self._filter_chain, raise_on_failure)
+        super().__init__(self._filter_chain, raise_on_failure, headers=headers)
 
 
 class LargestContentExtractor(Extractor):
